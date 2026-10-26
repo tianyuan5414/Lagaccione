@@ -300,6 +300,150 @@
   dev.off()
 }
 
+#Read data - 24 dates
+{
+  #Read raw data
+  rawGC <- read.csv(file = file.path('Data_R', '26_11_2025_lag_data_2025.csv'),
+                    row.names = 1)
+  
+  #Remove NA with 0
+  rawGC <- rawGC[-which(is.na(rawGC[, 8])),]
+  
+  #Read chronology
+  chronLag <- read.csv(file = file.path('Output_R', 'Lagaccione_24_Dates.csv'),
+                       row.names = 1)
+  
+  #Align the depth with age information
+  rawGC <- cbind(rawGC, Age = approx(x = chronLag[, 1], y = chronLag[, 2],
+                                     xout = rawGC[, 13] * 100)[[2]]/1000)
+  
+  tempVec <- approx(x = chronLag[, 1], y = chronLag[, 2],
+                    xout = rawGC[, 13] * 100)[[2]]/1000
+  
+  #Remove rows without age information
+  rawGC <- rawGC[which(!is.na(rawGC[, 14])),]
+  
+  #Loop to get the mean and variance of each sample
+  #Create a matrix
+  gcMeanMat24 <- matrix(nrow = length(unique(rawGC[, 13])),
+                       ncol = 4,
+                       dimnames = list(c(),
+                                       c('Mean', 'sd', 
+                                         colnames(rawGC)[13:14]
+                                       )
+                       )
+  )
+  
+  #Fill in the matrix with batch information
+  gcMeanMat24[,3:4] <- as.matrix(unique(rawGC[, 13:14]))
+  
+  #Loop to fill in the mean and sd for all samples
+  for (loopI in 1:nrow(gcMeanMat24)) {
+    
+    if (length(which((rawGC[, 13] == gcMeanMat24[loopI, 3])
+    )
+    ) > 1
+    ){
+      
+      gcMeanMat24[loopI, 1] <- mean(as.numeric(rawGC[which((rawGC[, 13] == gcMeanMat24[loopI, 3])
+      ), 
+      8]
+      )
+      )
+      
+      gcMeanMat24[loopI, 2] <- sd(as.numeric(rawGC[which((rawGC[, 13] == gcMeanMat24[loopI, 3])
+      ), 
+      8]
+      )
+      )
+      
+    } else {
+      
+      gcMeanMat24[loopI, 1] <- as.numeric(rawGC[which((rawGC[, 13] == gcMeanMat24[loopI, 3]) 
+      ), 
+      8]
+      )
+      
+      gcMeanMat24[loopI, 2] <- 0
+      
+    }
+    
+  }
+  
+  rm(tempVec)
+}
+
+#Plot
+{
+  gcLagPlot24 <- ggplot(data = gcMeanMat24) +
+    geom_point(aes(x = Age, y = Mean), size = 1.5, color = 'black', alpha = 0.5) +
+    geom_errorbar(aes(x = Age, 
+                      ymin = Mean - sd,
+                      ymax = Mean + sd),
+                  width = 0.1) +
+    geom_line(aes(x = Age, y = Mean), linewidth = 0.5, color = 'red') +
+    # annotate("rect", fill = "blue", alpha = 0.5,
+    #          xmin = 40, xmax = 41,
+    #          ymin = -Inf, ymax = Inf) +
+    # annotate("rect", fill = "blue", alpha = 0.5,
+    #          xmin = 37, xmax = 38.5,
+    #          ymin = -Inf, ymax = Inf) +
+    # annotate("rect", fill = "blue", alpha = 0.5,
+    #          xmin = 35, xmax = 36,
+    #          ymin = -Inf, ymax = Inf) +
+    scale_x_reverse(limit = c(58, 35), breaks = seq(58, 35, by = -1)) +
+    scale_y_continuous(limits = c(0.2, 0.45)) +
+    labs(x = 'Age (ka)', y = 'pCA (ng/150gr)') +
+    theme_classic() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.title.x = element_text(size = 16, family = 'arial'),
+      axis.text.x = element_text(size = 14, family = 'arial'),
+      
+      axis.text.y = element_text(size = 14, family = 'arial'),
+      axis.title.y = element_text(size = 16, family = 'arial'),
+    )
+  
+  gcLagPlot24Dep <- ggplot(data = gcMeanMat24) +
+    geom_point(aes(x = Depth, y = Mean), size = 1.5, color = 'black', alpha = 0.5) +
+    geom_errorbar(aes(x = Depth, 
+                      ymin = Mean - sd,
+                      ymax = Mean + sd),
+                  width = 0.1) +
+    geom_line(aes(x = Depth, y = Mean), linewidth = 0.5, color = 'red') +
+    # annotate("rect", fill = "blue", alpha = 0.5,
+    #          xmin = 40, xmax = 41,
+    #          ymin = -Inf, ymax = Inf) +
+    # annotate("rect", fill = "blue", alpha = 0.5,
+    #          xmin = 37, xmax = 38.5,
+    #          ymin = -Inf, ymax = Inf) +
+    # annotate("rect", fill = "blue", alpha = 0.5,
+    #          xmin = 35, xmax = 36,
+    #          ymin = -Inf, ymax = Inf) +
+    scale_x_reverse(limit = c(35, 19), breaks = seq(35, 19, by = -1)) +
+    scale_y_continuous(limits = c(0.2, 0.45)) +
+    labs(x = 'Depth (m)', y = 'pCA (ng/150gr)') +
+    theme_classic() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.title.x = element_text(size = 16, family = 'arial'),
+      axis.text.x = element_text(size = 14, family = 'arial'),
+      
+      axis.text.y = element_text(size = 14, family = 'arial'),
+      axis.title.y = element_text(size = 16, family = 'arial'),
+    )
+  
+  #Output the age-depth sequence
+  pdf(file = file.path('Figures_R', 'GC-MS_pCA_24_Dates.pdf'),   # The directory you want to save the file in
+      width = 12, # The width of the plot in inches
+      height = 12)
+  
+  gcLagPlot24 /
+    gcLagPlot24Dep
+  
+  dev.off()
+}
+
 #Read pollen concentration data
 {
   rawPollen <- read.csv(file.path('Data_R', 'lgc_Pollen.csv'))
