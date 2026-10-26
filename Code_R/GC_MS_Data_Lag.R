@@ -125,6 +125,7 @@
     #          xmin = 35, xmax = 36,
     #          ymin = -Inf, ymax = Inf) +
     scale_x_reverse(limit = c(46, 35), breaks = seq(46, 35, by = -1)) +
+    scale_y_continuous(limits = c(0.2, 0.45)) +
     labs(x = 'Age (ka)', y = 'pCA (ng/150gr)') +
     theme_classic() +
     theme(
@@ -153,6 +154,7 @@
     #          xmin = 35, xmax = 36,
     #          ymin = -Inf, ymax = Inf) +
     scale_x_reverse(limit = c(35, 19), breaks = seq(35, 19, by = -1)) +
+    scale_y_continuous(limits = c(0.2, 0.45)) +
     labs(x = 'Depth (m)', y = 'pCA (ng/150gr)') +
     theme_classic() +
     theme(
@@ -300,150 +302,147 @@
 
 #Read pollen concentration data
 {
-  #Setup parent directory for reading data
-  setwd(here())
-  setwd('..')
-  tempDir <- paste(getwd(), '/Data_R/lgc_alistair.csv', sep = '', collapse = NULL)
+  rawPollen <- read.csv(file.path('Data_R', 'lgc_Pollen.csv'))
   
-  rawPollen <- read.csv(tempDir)
-  
-  #Combine pollen concentration with GC-MS signals
-  tempVec <- approx(rawPollen[, 1], rawPollen[, 9],
-                    xout = gcMeanMat[, 3])[[2]]
-  
-  tempVec2 <- approx(rawPollen[, 1], rawPollen[, 102],
-                    xout = gcMeanMat[, 3])[[2]]
-  
-  tempVec3 <- log10(tempVec2)
-  
-  comGCPollen <- cbind(gcMeanMat, pollen = tempVec,
-                       pollen_C = tempVec2,
-                       pollen_C_Log = tempVec3)
-  
+  comPollen <- cbind(rawPollen, Age = approx(x = chronLag[, 1], y = chronLag[, 2],
+                                               xout = rawPollen[, 1] * 100)[[2]]/1000)
+  #Remove NA with 0
+  comPollen <- comPollen[-which(is.na(comPollen[, 10])),]
 }
 
 #Plot scatters between GC and pollen
 {
-  scaPlotGCPollen <- ggplot() +
-    geom_point(data = as.data.frame(comGCPollen[-47, ]),
-               aes(y = Mean, x = pollen),
-               size = 2, color = 'blue') + 
-    geom_point(data = as.data.frame(comGCPollen[47,]),
-               aes(y = comGCPollen[47, 1], x = comGCPollen[47, 5]),
-               size = 2, color = 'red') + 
-    geom_smooth(data = as.data.frame(comGCPollen[-47, ]),
-                aes(y = Mean, x = pollen),
-                method = "lm", color = 'blue') +
-    geom_smooth(data = as.data.frame(comGCPollen),
-                aes(y = Mean, x = pollen),
-                method = "lm", color = 'red') +
-    geom_text(
-      aes(x = 20, y = 0.45,
-          label = lm_eqn(comGCPollen[-47, ], 5, 1)), 
-      size = 4,
-      parse = TRUE) +
-    labs(y = 'GC-MS (ng/150gr)',
-         x = 'Pinus percentage (%)') + 
-    theme_classic() + 
-    theme(plot.title = element_blank(), 
-          axis.title.y = element_text(size = 20, family = 'arial'),
-          axis.text.y = element_text(size = 16, family = 'arial'),
-          axis.title.x = element_text(size = 20, family = 'arial'),
-          axis.text.x = element_text(size = 16, family = 'arial'),
-          panel.border = element_rect(colour = "black", fill=NA, linewidth=1)
-          # axis.line.y = element_blank(),
-          # axis.text.x = element_blank(), 
-          # axis.line.x = element_blank(),
-          # axis.title.x = element_blank(),
-          # axis.ticks.x = element_blank()
-    )
+  # gcLagPlot9ABIES <- ggplot(data = comPollen) +
+  #   geom_line(aes(x = Age, y = ABIES), linewidth = 0.5, color = 'red') +
+  #   scale_x_reverse(limit = c(46, 35), breaks = seq(46, 35, by = -1)) +
+  #   scale_y_continuous(limits = c(0, 10)) +
+  #   labs(x = 'Age (ka)', y = 'ABIES (%)') +
+  #   theme_classic() +
+  #   theme(
+  #     panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+  #     axis.title.x = element_text(size = 16, family = 'arial'),
+  #     axis.text.x = element_text(size = 14, family = 'arial'),
+  #     
+  #     axis.text.y = element_text(size = 14, family = 'arial'),
+  #     axis.title.y = element_text(size = 16, family = 'arial'),
+  #   )
   
-  scaPlotGCPollenC <- ggplot() +
-    geom_point(data = as.data.frame(comGCPollen[-46, ]),
-               aes(y = Mean, x = pollen_C),
-               size = 2, color = 'blue') + 
-    geom_point(data = as.data.frame(comGCPollen[46, ]),
-               aes(y = comGCPollen[46, 1], x = comGCPollen[46, 6]),
-               size = 2, color = 'red') + 
-    geom_smooth(data = as.data.frame(comGCPollen[-46, ]),
-                aes(y = Mean, x = pollen_C),
-                method = "lm", color = 'blue') +
-    geom_smooth(data = as.data.frame(comGCPollen),
-                aes(y = Mean, x = pollen_C),
-                method = "lm", color = 'red') +
-    geom_text(
-      aes(x = 20000, y = 0.45,
-          label = lm_eqn(comGCPollen[-46, ], 5, 1)), 
-      size = 4,
-      parse = TRUE) +
-    labs(y = 'GC-MS (ng/150gr)',
-         x = 'Pinus concentration (grains)') + 
-    theme_classic() + 
-    theme(plot.title = element_blank(), 
-          axis.title.y = element_text(size = 20, family = 'arial'),
-          axis.text.y = element_text(size = 16, family = 'arial'),
-          axis.title.x = element_text(size = 20, family = 'arial'),
-          axis.text.x = element_text(size = 16, family = 'arial'),
-          panel.border = element_rect(colour = "black", fill=NA, linewidth=1)
-          # axis.line.y = element_blank(),
-          # axis.text.x = element_blank(), 
-          # axis.line.x = element_blank(),
-          # axis.title.x = element_blank(),
-          # axis.ticks.x = element_blank()
-    )
+  # gcLagPlot9JUNIPERUS <- ggplot(data = comPollen) +
+  #   geom_line(aes(x = Age, y = JUNIPERUS), linewidth = 0.5, color = 'red') +
+  #   scale_x_reverse(limit = c(46, 35), breaks = seq(46, 35, by = -1)) +
+  #   # scale_y_continuous(limits = c(0, 100)) +
+  #   labs(x = 'Age (ka)', y = 'JUNIPERUS (%)') +
+  #   theme_classic() +
+  #   theme(
+  #     panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+  #     axis.title.x = element_text(size = 16, family = 'arial'),
+  #     axis.text.x = element_text(size = 14, family = 'arial'),
+  #     
+  #     axis.text.y = element_text(size = 14, family = 'arial'),
+  #     axis.title.y = element_text(size = 16, family = 'arial'),
+  #   )
   
-  scaPlotGCPollenCLog <- ggplot() +
-    geom_point(data = as.data.frame(comGCPollen),
-               aes(y = Mean, x = pollen_C_Log),
-               size = 2, color = 'blue') + 
-    geom_smooth(data = as.data.frame(comGCPollen),
-                aes(y = Mean, x = pollen_C_Log),
-                method = "lm", color = 'blue') +
-    geom_text(
-      aes(x = 3.5, y = 0.45,
-          label = lm_eqn(comGCPollen, 5, 1)), 
-      size = 4,
-      parse = TRUE) +
-    labs(y = 'GC-MS (ng/150gr)',
-         x = 'Log-transformed concentration') + 
-    theme_classic() + 
-    theme(plot.title = element_blank(), 
-          axis.title.y = element_text(size = 20, family = 'arial'),
-          axis.text.y = element_text(size = 16, family = 'arial'),
-          axis.title.x = element_text(size = 20, family = 'arial'),
-          axis.text.x = element_text(size = 16, family = 'arial'),
-          panel.border = element_rect(colour = "black", fill=NA, linewidth=1)
-          # axis.line.y = element_blank(),
-          # axis.text.x = element_blank(), 
-          # axis.line.x = element_blank(),
-          # axis.title.x = element_blank(),
-          # axis.ticks.x = element_blank()
-    )
+  # gcLagPlot9PICEA <- ggplot(data = comPollen) +
+  #   geom_line(aes(x = Age, y = PICEA), linewidth = 0.5, color = 'red') +
+  #   scale_x_reverse(limit = c(46, 35), breaks = seq(46, 35, by = -1)) +
+  #   # scale_y_continuous(limits = c(0, 100)) +
+  #   labs(x = 'Age (ka)', y = 'PICEA (%)') +
+  #   theme_classic() +
+  #   theme(
+  #     panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+  #     axis.title.x = element_text(size = 16, family = 'arial'),
+  #     axis.text.x = element_text(size = 14, family = 'arial'),
+  #     
+  #     axis.text.y = element_text(size = 14, family = 'arial'),
+  #     axis.title.y = element_text(size = 16, family = 'arial'),
+  #   )
   
-  plotComp <- ggplot() +
-    geom_bar(aes(x = comGCPollen[,4],
-                 y = comGCPollen[,5]),
-             fill = 'black',
-             alpha = 1,
-             stat = "identity",
-             width = 0.1) +
+  gcLagPlot9PINUS <- ggplot(data = comPollen) +
+    geom_line(aes(x = Age, y = PINUS), linewidth = 0.5, color = 'red') +
     scale_x_reverse(limit = c(46, 35), breaks = seq(46, 35, by = -1)) +
-    labs(y = 'Pollen percentage (%)',
-         x = 'Age (ka)') + 
-    theme_classic() + 
-    theme(plot.title = element_blank(), 
-          axis.title.y = element_text(size = 20, family = 'arial'),
-          axis.text.y = element_text(size = 16, family = 'arial'),
-          axis.title.x = element_text(size = 20, family = 'arial'),
-          axis.text.x = element_text(size = 16, family = 'arial'),
-          panel.border = element_rect(colour = "black", fill=NA, linewidth=1)
-          # axis.line.y = element_blank(),
-          # axis.text.x = element_blank(), 
-          # axis.line.x = element_blank(),
-          # axis.title.x = element_blank(),
-          # axis.ticks.x = element_blank()
+    # scale_y_continuous(limits = c(0, 100)) +
+    labs(x = 'Age (ka)', y = 'PINUS (%)') +
+    theme_classic() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.title.x = element_text(size = 16, family = 'arial'),
+      axis.text.x = element_text(size = 14, family = 'arial'),
+      
+      axis.text.y = element_text(size = 14, family = 'arial'),
+      axis.title.y = element_text(size = 16, family = 'arial'),
     )
-
+  
+  # gcLagPlot9BETULA <- ggplot(data = comPollen) +
+  #   geom_line(aes(x = Age, y = BETULA), linewidth = 0.5, color = 'red') +
+  #   scale_x_reverse(limit = c(46, 35), breaks = seq(46, 35, by = -1)) +
+  #   # scale_y_continuous(limits = c(0, 100)) +
+  #   labs(x = 'Age (ka)', y = 'BETULA (%)') +
+  #   theme_classic() +
+  #   theme(
+  #     panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+  #     axis.title.x = element_text(size = 16, family = 'arial'),
+  #     axis.text.x = element_text(size = 14, family = 'arial'),
+  #     
+  #     axis.text.y = element_text(size = 14, family = 'arial'),
+  #     axis.title.y = element_text(size = 16, family = 'arial'),
+  #   )
+  
+  gcLagPlot9QUERCUS_D <- ggplot(data = comPollen) +
+    geom_line(aes(x = Age, y = QUERCUS.deciduous), linewidth = 0.5, color = 'red') +
+    scale_x_reverse(limit = c(46, 35), breaks = seq(46, 35, by = -1)) +
+    scale_y_continuous(limits = c(0, 40)) +
+    labs(x = 'Age (ka)', y = 'QUERCUS_D (%)') +
+    theme_classic() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.title.x = element_text(size = 16, family = 'arial'),
+      axis.text.x = element_text(size = 14, family = 'arial'),
+      
+      axis.text.y = element_text(size = 14, family = 'arial'),
+      axis.title.y = element_text(size = 16, family = 'arial'),
+    )
+  
+  gcLagPlot9ARTEMISIA <- ggplot(data = comPollen) +
+    geom_line(aes(x = Age, y = ARTEMISIA), linewidth = 0.5, color = 'red') +
+    scale_x_reverse(limit = c(46, 35), breaks = seq(46, 35, by = -1)) +
+    # scale_y_continuous(limits = c(0, 100)) +
+    labs(x = 'Age (ka)', y = 'ARTEMISIA (%)') +
+    theme_classic() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.title.x = element_text(size = 16, family = 'arial'),
+      axis.text.x = element_text(size = 14, family = 'arial'),
+      
+      axis.text.y = element_text(size = 14, family = 'arial'),
+      axis.title.y = element_text(size = 16, family = 'arial'),
+    )
+  
+  # gcLagPlot9ASTEROIDEAE <- ggplot(data = comPollen) +
+  #   geom_line(aes(x = Age, y = ASTEROIDEAE), linewidth = 0.5, color = 'red') +
+  #   scale_x_reverse(limit = c(46, 35), breaks = seq(46, 35, by = -1)) +
+  #   # scale_y_continuous(limits = c(0, 100)) +
+  #   labs(x = 'Age (ka)', y = 'ASTEROIDEAE (%)') +
+  #   theme_classic() +
+  #   theme(
+  #     panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+  #     axis.title.x = element_text(size = 16, family = 'arial'),
+  #     axis.text.x = element_text(size = 14, family = 'arial'),
+  #     
+  #     axis.text.y = element_text(size = 14, family = 'arial'),
+  #     axis.title.y = element_text(size = 16, family = 'arial'),
+  #   )
+  
+  #Output the age-depth sequence
+  pdf(file = file.path('Figures_R', 'Pollen_Percentage_lgc.pdf'),   # The directory you want to save the file in
+      width = 12, # The width of the plot in inches
+      height = 12)
+  
+  gcLagPlot9 /
+    gcLagPlot9PINUS /
+    gcLagPlot9QUERCUS_D /
+    gcLagPlot9ARTEMISIA
+  
+  dev.off()
 }
 
 #Further investigation basing on the residual of linear model between GC and Pollen

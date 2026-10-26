@@ -87,16 +87,16 @@
   
   #Get the data of predicted ages at given depth sequence
   predict <- predict(modBchron, 
-                         newPositions = seq(1900, 4000, by = 1))
+                         newPositions = seq(1900, 4200, by = 1))
   
   #Get the mean and 95% percentile values of the predicted ages at each 0.5 cm depth
   predictPercen <- matrix(data = NA, nrow = ncol(predict), 
                               ncol = 4,
-                              dimnames = list(seq(1900, 4000, by = 1),
+                              dimnames = list(seq(1900, 4200, by = 1),
                                               c('Depth_(cm)', 'Median', 'L95', 'U95')))
   
   #Fill in the matrix
-  predictPercen[, 1] <- seq(1900, 4000, by = 1)
+  predictPercen[, 1] <- seq(1900, 4200, by = 1)
   predictPercen[, 2] <- apply(predict, 2, median)
   loopI <- 1
   while (loopI <= nrow(predictPercen)) {
