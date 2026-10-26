@@ -124,8 +124,36 @@
     # annotate("rect", fill = "blue", alpha = 0.5,
     #          xmin = 35, xmax = 36,
     #          ymin = -Inf, ymax = Inf) +
-    scale_x_reverse(limit = c(43, 35), breaks = seq(44, 35, by = -1)) +
+    scale_x_reverse(limit = c(46, 35), breaks = seq(46, 35, by = -1)) +
     labs(x = 'Age (ka)', y = 'pCA (ng/150gr)') +
+    theme_classic() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.title.x = element_text(size = 16, family = 'arial'),
+      axis.text.x = element_text(size = 14, family = 'arial'),
+      
+      axis.text.y = element_text(size = 14, family = 'arial'),
+      axis.title.y = element_text(size = 16, family = 'arial'),
+    )
+  
+  gcLagPlot9Dep <- ggplot(data = gcMeanMat9) +
+    geom_point(aes(x = Depth, y = Mean), size = 1.5, color = 'black', alpha = 0.5) +
+    geom_errorbar(aes(x = Depth, 
+                      ymin = Mean - sd,
+                      ymax = Mean + sd),
+                  width = 0.1) +
+    geom_line(aes(x = Depth, y = Mean), linewidth = 0.5, color = 'red') +
+    # annotate("rect", fill = "blue", alpha = 0.5,
+    #          xmin = 40, xmax = 41,
+    #          ymin = -Inf, ymax = Inf) +
+    # annotate("rect", fill = "blue", alpha = 0.5,
+    #          xmin = 37, xmax = 38.5,
+    #          ymin = -Inf, ymax = Inf) +
+    # annotate("rect", fill = "blue", alpha = 0.5,
+    #          xmin = 35, xmax = 36,
+    #          ymin = -Inf, ymax = Inf) +
+    scale_x_reverse(limit = c(35, 19), breaks = seq(35, 19, by = -1)) +
+    labs(x = 'Depth (m)', y = 'pCA (ng/150gr)') +
     theme_classic() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -139,9 +167,10 @@
   #Output the age-depth sequence
   pdf(file = file.path('Figures_R', 'GC-MS_pCA_9_Dates.pdf'),   # The directory you want to save the file in
       width = 12, # The width of the plot in inches
-      height = 6)
+      height = 12)
   
-  gcLagPlot9
+  gcLagPlot9 /
+    gcLagPlot9Dep
   
   dev.off()
 }

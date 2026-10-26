@@ -40,11 +40,17 @@
   #Calibrated ages
   write.csv(testb, file = file.path('Output_R', 'Calibrated_Ages_9_Dates.csv'))
   
+  pdf(file = file.path('Figures_R', 'Radiocarbon_Dates_9_Dates.pdf'),   # The directory you want to save the file in
+      width = 12, # The width of the plot in inches
+      height = 12)
+  
   #Plot the calibrated results
   plot(dateCali) +
     labs(x = 'Age (years BP)',
          y = 'Depth (cm)',
          title = 'Calibrated dates')
+  
+  dev.off()
   
   #Get the credible intervals for all radiocarbon dates
   age_Bey_20 <- sampleAges(dateCali)
@@ -58,7 +64,7 @@
                                 positions=depth, 
                                 positionThicknesses=thickness,
                                 ids=lab_ID, 
-                                predictPositions=seq(1900, 3000, by = 1)))
+                                predictPositions=seq(1900, 2400, by = 1)))
   #Output the age-depth sequence
   pdf(file = file.path('Figures_R', 'Chronology_9_Dates.pdf'),   # The directory you want to save the file in
       width = 12, # The width of the plot in inches
@@ -81,16 +87,16 @@
   
   #Get the data of predicted ages at given depth sequence
   predict <- predict(modBchron, 
-                         newPositions = seq(1900, 3000, by = 1))
+                         newPositions = seq(1900, 4000, by = 1))
   
   #Get the mean and 95% percentile values of the predicted ages at each 0.5 cm depth
   predictPercen <- matrix(data = NA, nrow = ncol(predict), 
                               ncol = 4,
-                              dimnames = list(seq(1900, 3000, by = 1),
+                              dimnames = list(seq(1900, 4000, by = 1),
                                               c('Depth_(cm)', 'Median', 'L95', 'U95')))
   
   #Fill in the matrix
-  predictPercen[, 1] <- seq(1900, 3000, by = 1)
+  predictPercen[, 1] <- seq(1900, 4000, by = 1)
   predictPercen[, 2] <- apply(predict, 2, median)
   loopI <- 1
   while (loopI <= nrow(predictPercen)) {
